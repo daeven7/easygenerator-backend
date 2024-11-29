@@ -1,0 +1,23 @@
+import { Module } from '@nestjs/common';
+import { AppController } from './app.controller';
+import { AppService } from './app.service';
+import { MongooseModule } from '@nestjs/mongoose';
+import { UsersModule } from './users/users.module';
+import { AuthModule } from './auth/auth.module';
+import { ConfigModule } from '@nestjs/config';
+import { TokensModule } from './tokens/tokens.module';
+
+@Module({
+  imports: [
+    ConfigModule.forRoot({ isGlobal: true }),
+    MongooseModule.forRoot(
+      'mongodb+srv://daevenbarreto:uplfapSJip9sMQKk@cluster0.bjwgs.mongodb.net/',
+    ),
+    UsersModule,
+    AuthModule,
+    TokensModule,
+  ],
+  controllers: [AppController],
+  providers: [AppService],
+})
+export class AppModule {}
