@@ -21,7 +21,7 @@ import { TokensModule } from 'src/tokens/tokens.module';
   imports: [
     JwtModule.register({}),
     UsersModule,
-    TokensModule
+    TokensModule,
     // MongooseModule.forFeature([
     //   { name: RefreshTokens.name, schema: RefreshTokenSchema },
     // ]),
