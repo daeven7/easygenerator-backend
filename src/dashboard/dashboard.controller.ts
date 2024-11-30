@@ -10,7 +10,7 @@ export class DashboardController {
   @UseGuards(AccessTokenGuard)
   @Get('/data')
   getData() {
-    this.logger.log('Accessing dashboard data endpoint');
+    this.logger.log('Accessing dashboard data ');
     return 'Welcome To The Application';
   }
 }
