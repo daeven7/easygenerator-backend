@@ -1,18 +1,9 @@
-// export class CreateUserDto {
-//   id: string;
-//   name: string;
-//   email: string;
-//   password: string;
-//   // refreshToken: string;
-// }
-
 import {
   IsEmail,
   IsNotEmpty,
   IsString,
   Matches,
   MinLength,
-  ValidateIf,
 } from 'class-validator';
 
 export class CreateUserDto {
@@ -34,7 +25,4 @@ export class CreateUserDto {
     message: 'Password must contain at least one special character',
   })
   password: string;
-
-  // Uncomment if needed in the future
-  // refreshToken: string;
 }

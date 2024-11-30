@@ -1,11 +1,9 @@
 import {
   Injectable,
   BadRequestException,
-  ForbiddenException,
   UnauthorizedException,
+  Logger,
 } from '@nestjs/common';
-import { CreateAuthDto } from './dto/create-auth.dto';
-import { UpdateAuthDto } from './dto/update-auth.dto';
 import { CreateUserDto } from 'src/users/dto/create-user.dto';
 import { UsersService } from 'src/users/users.service';
 import * as argon2 from 'argon2';
@@ -13,19 +11,14 @@ import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { AuthDto } from './dto/auth.dto';
 import { v4 as uuidv4 } from 'uuid';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
-import {
-  RefreshTokenDocument,
-  RefreshTokens,
-} from '../tokens/schemas/tokens.schema';
 import { TokensService } from 'src/tokens/tokens.service';
-import { Request, Response } from 'express';
+import { Response } from 'express';
 import { cookieConfig } from 'src/common/config/cookieConfig';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
 
 @Injectable()
 export class AuthService {
+  private logger = new Logger('AuthService');
   constructor(
     private usersService: UsersService,
     private jwtService: JwtService,
@@ -34,89 +27,107 @@ export class AuthService {
   ) {}
 
   async signUp(createUserDto: CreateUserDto, res: Response): Promise<any> {
-    // Check if user exists
-    // const userExists = await this.usersService.findByUsername(
-    //   createUserDto.name,
-    // );
-    // if (userExists) {
-    //   throw new BadRequestException('User already exists');
-    // }
-
+    this.logger.log(
+      `Attempting to sign up user with email: ${createUserDto.email}`,
+    );
     const userExists = await this.usersService.findByEmail(createUserDto.email);
     if (userExists) {
+      this.logger.warn(
+        `Sign up failed: User with email ${createUserDto.email} already exists`,
+      );
       throw new BadRequestException('User already exists');
     }
+    try {
+      // Hash password
+      const hash = await this.hashData(createUserDto.password);
+      const newUser = await this.usersService.create({
+        ...createUserDto,
+        password: hash,
+        id: uuidv4(),
+      });
 
-    // Hash password
-    const hash = await this.hashData(createUserDto.password);
-    const newUser = await this.usersService.create({
-      ...createUserDto,
-      password: hash,
-      id: uuidv4(),
-    });
+      this.logger.log(`User created successfully: ${newUser.id}`);
+      const tokens = await this.getTokens(
+        newUser.id as string,
+        newUser.email,
+        createUserDto.name,
+        res,
+      );
+      this.logger.debug(
+        `Tokens generated successfully for user: ${newUser.email}`,
+      );
 
-    // const tokens = await this.getTokens(newUser.id as string, newUser.username);
-    const tokens = await this.getTokens(
-      newUser.id as string,
-      newUser.email,
-      createUserDto.name,
-      res,
-    );
-    // await this.updateRefreshToken(newUser.id as string, tokens.refreshToken);
-    return tokens;
+      return tokens;
+    } catch (error) {
+      this.logger.error('Error during user signup', error);
+      throw error;
+    }
   }
 
   async signIn(data: AuthDto, res: Response) {
+    this.logger.log(`Attempting to sign in user with email: ${data.email}`);
+
     // Check if user exists
-    // const user = await this.usersService.findByUsername(data.username);
     const user = await this.usersService.findByEmail(data.email);
-    if (!user) throw new BadRequestException('User does not exist');
+    if (!user) {
+      this.logger.warn(
+        `Sign in failed: User with email ${data.email} does not exist`,
+      );
+      throw new BadRequestException('User does not exist');
+    }
     const passwordMatches = await argon2.verify(user.password, data.password);
-    if (!passwordMatches)
+    if (!passwordMatches) {
+      this.logger.warn(
+        `Sign in failed: Incorrect password for user ${data.email}`,
+      );
       throw new BadRequestException('Password is incorrect');
-    // const tokens = await this.getTokens(user.id as string, user.username);
+    }
+
     const tokens = await this.getTokens(
       user.id as string,
       user.email,
       user.name,
       res,
     );
-    // await this.updateRefreshToken(user.id as string, tokens.refreshToken);
 
+    this.logger.debug(`Sign in successful for user: ${data.email}`);
     return tokens;
-  }
-
-  async logout(userId: string) {
-    // return this.usersService.update(userId, { refreshToken: null });
   }
 
   hashData(data: string) {
     return argon2.hash(data);
   }
 
-  // userId: string,
-  //   username: string,
-  //   expires_at: string,
-  //   refreshToken: string,
-  //   res: Response
-
   async refreshTokens(data: RefreshTokenDto) {
-    const { userId, email, expiresAt, refreshToken, name, res } = data;
+    const { userId, email, refreshToken } = data;
+    this.logger.log(`Attempting to refresh tokens for user: ${email}`);
+
     if (refreshToken) {
-      if (await this.isRefreshTokenBlackListed(refreshToken, userId))
+      const isBlacklisted = await this.isRefreshTokenBlackListed(
+        refreshToken,
+        userId,
+      );
+      if (isBlacklisted) {
+        this.logger.warn(`Refresh token for user ${email} is blacklisted`);
         throw new UnauthorizedException('Invalid refresh token.');
+      }
     }
 
-    await this.tokenService.insert({
-      refreshToken: refreshToken,
-      expiresAt: expiresAt,
-      userId: userId,
-    });
+    try {
+      await this.tokenService.insert({
+        refreshToken: refreshToken,
+        expiresAt: data.expiresAt,
+        userId: userId,
+      });
+      this.logger.debug(`Refresh token stored successfully for user: ${email}`);
 
-    const tokens = await this.getTokens(userId, email, name, res);
-    // const tokens = await this.getTokens(user.id, user.username);
-    // await this.updateRefreshToken(user.id, tokens.refreshToken);
-    return tokens;
+      const token = await this.getTokens(userId, email, data.name, data.res);
+      this.logger.debug(`New tokens issued successfully for user: ${email}`);
+      return token;
+    } catch (error) {
+      this.logger.error('Error during token refresh', error);
+      throw error;
+    }
   }
 
   private isRefreshTokenBlackListed(refreshToken: string, userId: string) {
@@ -124,29 +135,25 @@ export class AuthService {
   }
 
   async getTokens(userId: string, email: string, name: string, res: Response) {
-    let refreshToken = await this.jwtService.signAsync(
-      {
-        sub: userId,
-        email,
-        name,
-      },
-      {
-        secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
-        // expiresIn: '30s',
-        expiresIn: '7d',
-      },
-    );
+    try {
+      let refreshToken = await this.jwtService.signAsync(
+        {
+          sub: userId,
+          email,
+          name,
+        },
+        {
+          secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
+          expiresIn: '30s',
+          // expiresIn: '7d',
+        },
+      );
 
-    res.cookie(cookieConfig.refreshToken.name, refreshToken, {
-      ...cookieConfig.refreshToken.options,
-    });
+      res.cookie(cookieConfig.refreshToken.name, refreshToken, {
+        ...cookieConfig.refreshToken.options,
+      });
 
-    console.log(
-      `Cookie set: ${cookieConfig.refreshToken.name}=${refreshToken}`,
-    );
-
-    const [accessToken] = await Promise.all([
-      this.jwtService.signAsync(
+      let accessToken = await this.jwtService.signAsync(
         {
           sub: userId,
           email,
@@ -154,26 +161,20 @@ export class AuthService {
         },
         {
           secret: this.configService.get<string>('JWT_ACCESS_SECRET'),
-          // expiresIn: '15s',
-          expiresIn: '15m',
+          expiresIn: '15s',
+          // expiresIn: '15m',
         },
-      ),
-      // this.jwtService.signAsync(
-      //   {
-      //     sub: userId,
-      //     username,
-      //   },
-      //   {
-      //     secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
-      //     // expiresIn: '30s',
-      //     expiresIn: '7d',
-      //   },
-      // ),
-    ]);
+      );
 
-    return {
-      accessToken,
-      // refreshToken,
-    };
+      return {
+        accessToken,
+      };
+    } catch (error) {
+      this.logger.error(
+        `Error generating tokens for user: ${email}`,
+        error.stack,
+      );
+      throw error;
+    }
   }
 }

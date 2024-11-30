@@ -12,17 +12,14 @@ export class TokensService {
   ) {}
 
   insert(token: TokenDto): Promise<RefreshTokenDocument> {
-    // return 'This action adds a new user';
     const blacklistedToken = new this.tokensModel(token);
     return blacklistedToken.save();
   }
 
   async existsBy(conditions: Record<string, any>): Promise<boolean> {
     const exists = await this.tokensModel.exists(conditions);
-    return !!exists; // Returns true if exists, false otherwise
+    return !!exists; 
   }
 
-  //   findAll(): Promise<UserDocument[]> {
-  //     return this.userModel.find().exec();
-  //   }
+
 }

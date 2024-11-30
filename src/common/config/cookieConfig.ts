@@ -19,7 +19,6 @@ export const cookieConfig = {
 
 export const extractRefreshTokenFromCookies = (req: Request) => {
     const cookies = req.headers.cookie?.split('; ');
-    console.log("inside extractRefreshTokenFromCookies", cookies)
     if (!cookies?.length) {
       return null;
     }
