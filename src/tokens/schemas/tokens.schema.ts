@@ -5,13 +5,13 @@ export type RefreshTokenDocument = RefreshTokens & Document;
 
 @Schema()
 export class RefreshTokens {
-  @Prop({ required: true,})
+  @Prop({ required: true })
   userId: string;
 
   @Prop({ required: true })
   refreshToken: string;
 
-  @Prop({ alias: 'expires_at', required: true })
+  @Prop({ required: true , type: Date})
   expiresAt: Date;
 }
 

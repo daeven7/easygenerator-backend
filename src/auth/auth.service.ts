@@ -136,6 +136,15 @@ export class AuthService {
 
   async getTokens(userId: string, email: string, name: string, res: Response) {
     try {
+      const accessTokenSecret =
+        this.configService.get<string>('JWT_ACCESS_SECRET');
+      const refreshTokenSecret =
+        this.configService.get<string>('JWT_REFRESH_SECRET');
+      const accessTokenExpiry =
+        this.configService.get<string>('JWT_ACCESS_EXPIRY');
+      const refreshTokenExpiry =
+        this.configService.get<string>('JWT_REFRESH_EXPIRY');
+
       let refreshToken = await this.jwtService.signAsync(
         {
           sub: userId,
@@ -143,9 +152,8 @@ export class AuthService {
           name,
         },
         {
-          secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
-          expiresIn: '30s',
-          // expiresIn: '7d',
+          secret: refreshTokenSecret,
+          expiresIn: refreshTokenExpiry,
         },
       );
 
@@ -160,9 +168,8 @@ export class AuthService {
           name,
         },
         {
-          secret: this.configService.get<string>('JWT_ACCESS_SECRET'),
-          expiresIn: '15s',
-          // expiresIn: '15m',
+          secret: accessTokenSecret,
+          expiresIn: accessTokenExpiry,
         },
       );
 

@@ -2,16 +2,15 @@ import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { Request } from 'express';
 import { Injectable } from '@nestjs/common';
-import * as dotenv from 'dotenv';
 import { extractRefreshTokenFromCookies } from 'src/common/config/cookieConfig';
-dotenv.config();
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class RefreshTokenStrategy extends PassportStrategy(
   Strategy,
   'jwt-refresh',
 ) {
-  constructor() {
+  constructor(private configService: ConfigService) {
     super({
       jwtFromRequest: ExtractJwt.fromExtractors([
         (req: Request) => {
@@ -19,7 +18,7 @@ export class RefreshTokenStrategy extends PassportStrategy(
           return token;
         },
       ]),
-      secretOrKey: process.env.JWT_REFRESH_SECRET,
+      secretOrKey: configService.get<string>('JWT_REFRESH_SECRET'),
       passReqToCallback: true,
     });
   }
