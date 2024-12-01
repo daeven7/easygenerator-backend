@@ -15,6 +15,7 @@ import { TokensService } from 'src/tokens/tokens.service';
 import { Response } from 'express';
 import { cookieConfig } from 'src/common/config/cookieConfig';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
+import { UserDocument } from 'src/users/schemas/user.schema';
 
 @Injectable()
 export class AuthService {
@@ -30,7 +31,15 @@ export class AuthService {
     this.logger.log(
       `Attempting to sign up user with email: ${createUserDto.email}`,
     );
-    const userExists = await this.usersService.findByEmail(createUserDto.email);
+
+    let userExists: UserDocument;
+    try {
+      userExists = await this.usersService.findByEmail(createUserDto.email);
+    } catch (error) {
+      this.logger.error('Error fetching user ', error);
+      throw error;
+    }
+
     if (userExists) {
       this.logger.warn(
         `Sign up failed: User with email ${createUserDto.email} already exists`,
@@ -68,7 +77,15 @@ export class AuthService {
     this.logger.log(`Attempting to sign in user with email: ${data.email}`);
 
     // Check if user exists
-    const user = await this.usersService.findByEmail(data.email);
+
+    let user: UserDocument;
+    try {
+      user = await this.usersService.findByEmail(data.email);
+    } catch (error) {
+      this.logger.error('Error fetching user ', error);
+      throw error;
+    }
+
     if (!user) {
       this.logger.warn(
         `Sign in failed: User with email ${data.email} does not exist`,
@@ -113,13 +130,16 @@ export class AuthService {
       }
     }
 
+    //blacklist the old token
     try {
       await this.tokenService.insert({
         refreshToken: refreshToken,
         expiresAt: data.expiresAt,
         userId: userId,
       });
-      this.logger.debug(`Refresh token stored successfully for user: ${email}`);
+      this.logger.debug(
+        `Refresh token blacklisted successfully for user: ${email}`,
+      );
 
       const token = await this.getTokens(userId, email, data.name, data.res);
       this.logger.debug(`New tokens issued successfully for user: ${email}`);
@@ -131,7 +151,11 @@ export class AuthService {
   }
 
   private isRefreshTokenBlackListed(refreshToken: string, userId: string) {
-    return this.tokenService.existsBy({ refreshToken, userId });
+    try {
+      return this.tokenService.existsBy({ refreshToken, userId });
+    } catch (error) {
+      this.logger.error('Error fetching refresh token from db');
+    }
   }
 
   async getTokens(userId: string, email: string, name: string, res: Response) {

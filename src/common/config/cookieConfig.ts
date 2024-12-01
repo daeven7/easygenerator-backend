@@ -1,19 +1,15 @@
-import { ConfigService } from '@nestjs/config';
 import { Request } from 'express';
 
 export const cookieConfig = {
   refreshToken: {
     name: 'refreshToken',
-    options: (configService: ConfigService) => ({
-      path: configService.get<string>('COOKIE_PATH', '/'),
+    options: {
+      path: '/',
       httpOnly: true,
-      sameSite: configService.get<'none' | 'lax' | 'strict'>(
-        'COOKIE_SAMESITE',
-        'none',
-      ),
-      secure: configService.get<boolean>('COOKIE_SECURE', true),
-      maxAge: configService.get<number>('COOKIE_MAXAGE', 2592000000),
-    }),
+      sameSite: 'strict' as 'strict',
+      secure: true,
+      maxAge: 2592000000,
+    },
   },
 };
 
