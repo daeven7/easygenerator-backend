@@ -48,7 +48,7 @@ npm run start
 1. **React:** Component-based library for building user interfaces.
 2. **Vite:**  Fast build tool and development server.
 3. **Zustand:**  State management library for React.
-4. **React-Query:** Data fetching and state management for api state.
+4. **React-Query:** Data fetching, caching and state management for api state.
 5. **Modular SCSS:** Modular styles for better code organization.
 6. **TypeScript:** Enforces type safety for clean and maintainable code.
 7. **Ant Design (antd):**  UI framework for polished, professional design.
