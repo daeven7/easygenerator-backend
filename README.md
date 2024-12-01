@@ -32,15 +32,10 @@ PORT=3000 # Port on which the backend will run
 CORS_ORIGIN=http://localhost:5173 # Frontend origin for CORS, replace with your origin
 MONGODB_URI="Your MongoDB URI"
 
-COOKIE_PATH='/'
-COOKIE_SAMESITE='none' # Use 'none' for local development and 'strict' in production
-COOKIE_SECURE=true
-COOKIE_MAXAGE=2592000000 # Cookie expiration time (in milliseconds)
-
 JWT_ACCESS_SECRET="Your JWT access secret"
 JWT_REFRESH_SECRET="Your JWT refresh secret"
-JWT_ACCESS_EXPIRY=15s    # Access token expiry (e.g., '15s', '15m', etc.)
-JWT_REFRESH_EXPIRY=30s   # Refresh token expiry (e.g., '30s', '30d', etc.)
+JWT_ACCESS_EXPIRY=10m    # Access token expiry (e.g., '15s', '15m', etc.)
+JWT_REFRESH_EXPIRY=30d   # Refresh token expiry (e.g., '30s', '30d', etc.)
 ```
 3. Start the backend server:
 ```
@@ -107,7 +102,7 @@ npm run start
 **Signin Page**
 ![Signin Page](https://private-user-images.githubusercontent.com/40667696/391273568-fa1b13c5-7bc2-4ef5-a10a-04371c3a573e.png?jwt=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3MzMwMzU4OTgsIm5iZiI6MTczMzAzNTU5OCwicGF0aCI6Ii80MDY2NzY5Ni8zOTEyNzM1NjgtZmExYjEzYzUtN2JjMi00ZWY1LWExMGEtMDQzNzFjM2E1NzNlLnBuZz9YLUFtei1BbGdvcml0aG09QVdTNC1ITUFDLVNIQTI1NiZYLUFtei1DcmVkZW50aWFsPUFLSUFWQ09EWUxTQTUzUFFLNFpBJTJGMjAyNDEyMDElMkZ1cy1lYXN0LTElMkZzMyUyRmF3czRfcmVxdWVzdCZYLUFtei1EYXRlPTIwMjQxMjAxVDA2NDYzOFomWC1BbXotRXhwaXJlcz0zMDAmWC1BbXotU2lnbmF0dXJlPWQyZmVjNDY1ZTcxMmE2MTcxMzkzMzI3MDc0ZWQ0MGI2MzU2YTYyOTY0ZWE1MTA5ZDYyNjA1NjE3OTExMTRiZDYmWC1BbXotU2lnbmVkSGVhZGVycz1ob3N0In0.Tu7s_OKJLUAFawQYRycdaFY3OBqIArBkUzxHBBX2CQc)
 
-**On successful signin/signup user is redirected to welcome page which displays the name of the use along with the logout option**
+**On successful signin/signup user is redirected to welcome page which displays the name of the user along with the logout option**
 ![On successful signin/signup user is redirected to welcome page which displays the name of the use along with the logout option](https://private-user-images.githubusercontent.com/40667696/391274020-3c13ae71-5ba2-46f5-9ee9-1453b18fb2ed.png?jwt=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3MzMwMzU4OTgsIm5iZiI6MTczMzAzNTU5OCwicGF0aCI6Ii80MDY2NzY5Ni8zOTEyNzQwMjAtM2MxM2FlNzEtNWJhMi00NmY1LTllZTktMTQ1M2IxOGZiMmVkLnBuZz9YLUFtei1BbGdvcml0aG09QVdTNC1ITUFDLVNIQTI1NiZYLUFtei1DcmVkZW50aWFsPUFLSUFWQ09EWUxTQTUzUFFLNFpBJTJGMjAyNDEyMDElMkZ1cy1lYXN0LTElMkZzMyUyRmF3czRfcmVxdWVzdCZYLUFtei1EYXRlPTIwMjQxMjAxVDA2NDYzOFomWC1BbXotRXhwaXJlcz0zMDAmWC1BbXotU2lnbmF0dXJlPTJkOTNhNjg1ODY5ZDQwNTFlNjMzODQ0MGNmODFkY2U4N2NlMWQ0ZDM4ZTljZDE3MTViOWViYjhhMmU0NmJmNGYmWC1BbXotU2lnbmVkSGVhZGVycz1ob3N0In0.e-sE7Y-1MOPf2RC8_JdaHatnVN6-TFoVUYo8eaIlyPE)
 
 **Automatic silent refresh when access token expires**
